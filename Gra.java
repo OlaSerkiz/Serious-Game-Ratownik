@@ -1,4 +1,12 @@
-package PACKAGE_NAME;
+public class Gra {
+    private Gracz gracz;
+    private MozliweScenatiusze zarzadca;
+    private Punktacja punktacja;
+    private Czas czas;
+    private Scenariusze aktualny;
+    private OknoGry okno;
 
-public class Glowna_Gra {
+    public Gra(String imie) {
+        this.gracz = new
+    }
 }

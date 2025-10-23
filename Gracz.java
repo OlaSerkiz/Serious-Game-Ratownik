@@ -1,8 +1,8 @@
-public class PoleGracza {
+public class Gracz {
     private String imie;
     private int punkty;
 
-    public PoleGracza(String imie) {
+    public Gracz(String imie) {
         this.imie = imie;
         this.punkty = 0;
     }
