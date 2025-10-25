@@ -39,5 +39,9 @@ public class MozliweScenatiusze {
         if (!maKolejnyScenariusz()) return null;
         return lista.get(indeks++);
     }
+
+    public void resetuj() {
+        indeks = 0;
+    }
 }
 
