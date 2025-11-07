@@ -29,7 +29,7 @@ public class Gra {
         }
         aktualny = zarzadca.pobierzKolejnyScenariusz();
         czas.startPomiaru();
-        if (okno != null) okno.wyswietlScenatriusz(aktualny);
+        if (okno != null) okno.wyswietlScenariusz(aktualny);
     }
 
     public void roztrzygnijWybor(int indeks, long czasReakciMs) {
@@ -56,4 +56,14 @@ public class Gra {
         }
         RaportZGry.zapis(gracz);
     }
+
+    public void obsluzOdpowiedzTekstowa(String wpisana, long czasReakcji) {
+        int wynik = aktualny.ocenOdpowiedzTekstowa(wpisana);
+        int bonus = czas.obliczDodatkowePunkty(czasReakcji);
+        punktacja.zapiszWynik(gracz, wynik + bonus);
+        okno.aktualizacjaPunktow(gracz.getPunkty());
+        if (wynik <= -5) okno.pokazBladKrytyczny();
+        else wyswietlKolejny();
+    }
+
 }

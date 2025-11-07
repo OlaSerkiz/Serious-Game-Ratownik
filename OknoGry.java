@@ -9,11 +9,14 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.scene.control.TextField;
 
 public class OknoGry extends Application {
     private Gra gra;
@@ -24,26 +27,38 @@ public class OknoGry extends Application {
     private Timeline licznik;
     private long czasStart;
     private final int CZAS_NA_ODPOWIEDZ_MS = 10000; // 10 sekund
+    private TextField poleTekstowe;
+    private Button zatwierdzBtn;
 
     public double width = 900;
     public double height = 600;
+
     @Override
     public void start(Stage primaryStage) {
-        // --- Tworzymy grę i przypisujemy okno
+        // Tworzymy grę i przypisujemy okno
         gra = new Gra("Ratownik");
         gra.ustawOkno(this);
 
-        //double width = 900;
-        //double height = 600;
+        // --- Tło ---
+        Image obrazTla;
+        try {
+            obrazTla = new Image(getClass().getResourceAsStream("/images/plaza.jpg"));
+        } catch (Exception e) {
+            obrazTla = null;
+        }
 
-        // --- Rysowana plaża
-        Canvas canvas = new Canvas(width,height);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        rysujPlaze(gc);
+        StackPane center = new StackPane();
+        if (obrazTla != null) {
+            ImageView view = new ImageView(obrazTla);
+            view.setPreserveRatio(false);
+            view.setFitWidth(900);
+            view.setFitHeight(450);
+            center.getChildren().add(view);
+        } else {
+            center.setStyle("-fx-background-color: linear-gradient(to bottom, #87CEEB, #F4E1C1);");
+        }
 
-        StackPane rysunek = new StackPane(canvas);
-
-        // --- Opis i przyciski
+        // --- Etykieta opisu ---
         opisLabel = new Label("Witaj! Kliknij START, aby rozpocząć dzień pracy ratownika.");
         opisLabel.setFont(Font.font(18));
         opisLabel.setTextFill(Color.WHITE);
@@ -51,6 +66,7 @@ public class OknoGry extends Application {
         opisLabel.setMaxWidth(700);
         opisLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 3, 0, 0, 0);");
 
+        // --- Przyciski odpowiedzi ---
         VBox odpowiedziBox = new VBox(10);
         odpowiedziBox.setAlignment(Pos.CENTER);
 
@@ -69,13 +85,32 @@ public class OknoGry extends Application {
             odpowiedziBox.getChildren().add(b);
         }
 
-        VBox panelCentralny = new VBox(15, opisLabel, odpowiedziBox);
+        // --- Pole tekstowe (inicjalizujemy PRZED VBox'em)
+        poleTekstowe = new TextField();
+        poleTekstowe.setPromptText("Wpisz odpowiedź...");
+        poleTekstowe.setMaxWidth(300);
+        poleTekstowe.setVisible(false);
+
+        zatwierdzBtn = new Button("Zatwierdź");
+        zatwierdzBtn.setVisible(false);
+        zatwierdzBtn.setOnAction(e -> {
+            String wpisana = poleTekstowe.getText();
+            zatrzymajLicznik();
+            long czasReakcji = System.currentTimeMillis() - czasStart;
+            gra.obsluzOdpowiedzTekstowa(wpisana, czasReakcji);
+            poleTekstowe.clear();
+            poleTekstowe.setVisible(false);
+            zatwierdzBtn.setVisible(false);
+        });
+
+        // --- Panel centralny (dopiero teraz tworzymy, gdy wszystko istnieje)
+        VBox panelCentralny = new VBox(15, opisLabel, odpowiedziBox, poleTekstowe, zatwierdzBtn);
         panelCentralny.setAlignment(Pos.CENTER);
         panelCentralny.setPadding(new Insets(20));
 
-        StackPane warstwa = new StackPane(rysunek, panelCentralny);
+        StackPane warstwa = new StackPane(center, panelCentralny);
 
-        // --- Górny pasek tytułu
+        // --- Pasek tytułu ---
         Label tytul = new Label("RATOWNIK — Symulacja szkoleniowa");
         tytul.setFont(Font.font(28));
         tytul.setTextFill(Color.WHITE);
@@ -85,7 +120,7 @@ public class OknoGry extends Application {
         top.setPadding(new Insets(10));
         top.setStyle("-fx-background-color: rgba(0,0,0,0.25);");
 
-        // --- Dolny pasek z punktami i paskiem czasu
+        // --- Dolny pasek ---
         punktyLabel = new Label("Punkty: 0");
         punktyLabel.setTextFill(Color.WHITE);
         punktyLabel.setFont(Font.font(16));
@@ -103,99 +138,28 @@ public class OknoGry extends Application {
         root.setCenter(warstwa);
         root.setBottom(bottom);
 
-        Scene scena = new Scene(root, 900, 600, Color.LIGHTBLUE);
+        Scene scena = new Scene(root, width, height, Color.LIGHTBLUE);
         primaryStage.setTitle("Ratownik - gra szkoleniowa");
         primaryStage.setScene(scena);
         primaryStage.show();
 
-        disablePrzyciski(true);
-
-        // --- Przycisk startu
+        // --- Przycisk START ---
         Button startBtn = new Button("START");
         startBtn.setOnAction(e -> {
             startBtn.setDisable(true);
             disablePrzyciski(false);
             gra.rozpocznij();
         });
-        ((VBox) panelCentralny.getChildren().get(1)).getChildren().addFirst(startBtn);
+        odpowiedziBox.getChildren().add(0, startBtn); // dodaj START na górze
 
-        // --- Przycisk resetu do dodania
-        Button restetBtn = new Button("RESET");
+        disablePrzyciski(true);
     }
-
-    /**
-     * Rysuje prostą plażę z niebem, morzem, piaskiem i słońcem.
-     */
-    private void rysujPlaze(GraphicsContext gc) {
-        double skyHeight = height / 3;
-
-        // Niebo
-        gc.setFill(Color.SKYBLUE);
-        gc.fillRect(0, 0, width, skyHeight);
-
-        // Chmurki
-        gc.setFill(Color.rgb(255,255,255,0.8));
-        gc.fillOval(100,60,120,60);
-        gc.fillOval(160,40,130,70);
-        gc.fillOval(220,60,120,60);
-        gc.fillOval(450,90,140,80);
-        gc.fillOval(515,65,120,60);
-
-        /**
-         * Nie wiem czemu nie działa morze??
-         * Miało być, niebo to 1/3 wysokości
-         * a plaża i morze 2/3 tak po skosie, żeby nie było takiej prostej linii
-         * + do dopisania jeszcze fale w różnm kolorze
-         */
-
-        // Morze
-        for (int i = 0; i < 900; i += 10) {
-            double intensity = 0.5 + 0.5 * Math.sin(i / 50.0);
-            gc.setFill(Color.color(0, 0, 0.8, intensity));
-            gc.fillRect(i, 300, 10, 300);
-        }
-
-        // Piasek
-        gc.setFill(Color.rgb(250, 240,150));
-        gc.fillRect(0, skyHeight, width, height - skyHeight);
-
-        // Słońce
-        gc.setFill(Color.YELLOW);
-        gc.fillOval(700, 50, 120, 120);
-
-        gc.setStroke(Color.YELLOW);
-        gc.setLineWidth(5);
-        for (int i = 0; i < 360; i += 20) {
-            double angle = Math.toRadians(i);
-            double x1 = 760 + 70 * Math.cos(angle);
-            double y1 = 110 + 70 * Math.sin(angle);
-            double x2 = 760 + 100 * Math.cos(angle);
-            double y2 = 110 + 100 * Math.sin(angle);
-            gc.strokeLine(x1, y1, x2, y2);
-        }
-
-        // Wieża ratownika prawie dobrze
-        gc.setFill(Color.WHITE);
-        gc.fillRect(650, 300, 100, 100);
-        gc.setStroke(Color.WHITE);
-        gc.setLineWidth(10);
-        gc.strokeLine(660, 400, 640, 460);
-        gc.strokeLine(740, 400, 760, 460);
-
-        // ----- Łódka wymaga dopracowania-----
-        gc.setFill(Color.ORANGE);
-        gc.fillPolygon(
-                new double[]{300, 450, 470, 280},
-                new double[]{470, 470, 490, 490},
-                4
-        );
-    }
-
-
 
     public void pokazKoniecDnia(Gracz g) {
         opisLabel.setText("🏁 Koniec dnia. Wynik: " + g.getPunkty() + " pkt");
         disablePrzyciski(true);
+        poleTekstowe.setVisible(false);
+        zatwierdzBtn.setVisible(false);
     }
 
     private void disablePrzyciski(boolean stan) {
@@ -214,7 +178,7 @@ public class OknoGry extends Application {
             if (uplynelo >= ms) {
                 zatrzymajLicznik();
                 disablePrzyciski(true);
-                gra.roztrzygnijWybor(1, ms); // automatycznie wybiera środkową odpowiedź
+                gra.roztrzygnijWybor(1, ms);
             }
         }));
         licznik.setCycleCount(Timeline.INDEFINITE);
@@ -232,19 +196,31 @@ public class OknoGry extends Application {
     public void pokazBladKrytyczny() {
         opisLabel.setText("❌ Popełniłeś krytyczny błąd! Koniec gry.");
         disablePrzyciski(true);
+        poleTekstowe.setVisible(false);
+        zatwierdzBtn.setVisible(false);
     }
 
     public void aktualizacjaPunktow(int punkty) {
         punktyLabel.setText("Punkty: " + punkty);
     }
 
-    public void wyswietlScenatriusz(Scenariusze s) {
+    public void wyswietlScenariusz(Scenariusze s) {
         opisLabel.setText("📢 " + s.getOpisy());
-        String[] odp = s.getOdpowiedzi();
-        for (int i = 0; i < 3; i++) {
-            przyciski[i].setText((i + 1) + ". " + odp[i]);
-            przyciski[i].setDisable(false);
-        }
         startLicznik();
+
+        if (s.isOtwartePytanie()) {
+            for (Button b : przyciski) b.setVisible(false);
+            poleTekstowe.setVisible(true);
+            zatwierdzBtn.setVisible(true);
+        } else {
+            poleTekstowe.setVisible(false);
+            zatwierdzBtn.setVisible(false);
+            String[] odp = s.getOdpowiedzi();
+            for (int i = 0; i < 3; i++) {
+                przyciski[i].setText((i + 1) + ". " + odp[i]);
+                przyciski[i].setVisible(true);
+                przyciski[i].setDisable(false);
+            }
+        }
     }
 }
