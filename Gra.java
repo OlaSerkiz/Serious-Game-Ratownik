@@ -5,6 +5,7 @@ public class Gra {
     private Czas czas;
     private Scenariusze aktualny;
     private OknoGry okno;
+    private String imie;
 
     public Gra(String imie) {
         this.gracz = new Gracz(imie);
@@ -21,6 +22,14 @@ public class Gra {
         zarzadca.resetuj();
         wyswietlKolejny();
     }
+
+    public void resetuj() {
+        gracz = new Gracz(imie); 
+        if (okno != null) {
+            okno.aktualizacjaPunktow(0);
+        }
+    }
+
 
     public void wyswietlKolejny() {
         if(!zarzadca.maKolejnyScenariusz()) {
