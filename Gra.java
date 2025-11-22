@@ -24,7 +24,7 @@ public class Gra {
     }
 
     public void resetuj() {
-        gracz = new Gracz(imie); 
+        gracz = new Gracz(imie);
         if (okno != null) {
             okno.aktualizacjaPunktow(0);
         }

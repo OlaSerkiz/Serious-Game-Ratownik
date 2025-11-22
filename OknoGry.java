@@ -12,6 +12,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.util.stream.Stream;
+
 
 public class OknoGry extends Application {
     private Gra gra;
@@ -25,13 +27,13 @@ public class OknoGry extends Application {
     private TextField poleTekstowe;
     private Button zatwierdzBtn;
 
-    // Dodatkowe przyciski menu bocznego
+    // Przyciski
     private Button startBtn;
     private Button stopBtn;
     private Button resetBtn;
     private Button wznowBtn;
 
-    // Layouty (teraz globalne)
+    // Layouty
     private BorderPane rootPane;
     private StackPane centerStack;
     private VBox menuStartowe;
@@ -58,7 +60,7 @@ public class OknoGry extends Application {
             ImageView view = new ImageView(obrazTla);
             view.setPreserveRatio(false);
             view.setFitWidth(width);
-            view.setFitHeight(height - 120); // zostaw miejsce na top + bottom
+            view.setFitHeight(height - 100); // zostaw miejsce na top + bottom
             centerStack.getChildren().add(view);
         } else {
             centerStack.setStyle("-fx-background-color: linear-gradient(to bottom, #87CEEB, #F4E1C1);");
@@ -110,6 +112,13 @@ public class OknoGry extends Application {
         stopBtn = new Button("⏸ STOP");
         resetBtn = new Button("🔁 RESET");
 
+        Stream.of(wznowBtn, stopBtn, resetBtn).forEach(b -> {
+            b.setPrefWidth(150);
+            b.setFont(Font.font(20));
+            b.setStyle("-fx-background-color: rgba(255,255,255,0.85);"
+                    + "-fx-border-color: black; -fx-border-width: 2;");
+        });
+
         wznowBtn.setMinWidth(120);
         stopBtn.setMinWidth(120);
         resetBtn.setMinWidth(120);
@@ -123,6 +132,9 @@ public class OknoGry extends Application {
         panelBoczny.setPadding(new Insets(20));
         panelBoczny.setStyle("-fx-background-color: rgba(0,0,0,0.28); -fx-border-color: white; -fx-border-width: 2;");
         panelBoczny.setVisible(false);
+
+        panelBoczny.setPrefWidth(180);
+        panelBoczny.setMaxWidth(180);
 
         // akcje bocznych przycisków (podłączymy później do logiki)
         wznowBtn.setOnAction(e -> wznowGre());
@@ -205,9 +217,9 @@ public class OknoGry extends Application {
         panelBoczny.setVisible(true);
 
         // włącz boczne przyciski (stop/reset/wznów)
-        stopBtn.setDisable(true);
-        resetBtn.setDisable(true);
-        wznowBtn.setDisable(true);
+        stopBtn.setDisable(false);
+        resetBtn.setDisable(false);
+        wznowBtn.setDisable(false);
 
         // odblokuj przyciski odpowiedzi i rozpocznij logikę gry
         disablePrzyciski(true);
@@ -229,7 +241,10 @@ public class OknoGry extends Application {
     private void resetujGre() {
         zatrzymajLicznik();
         gra.resetuj();
-        opisLabel.setText("🔁 Gra zresetowana. Kliknij WZNÓW, by rozpocząć nową zmianę.");
+        panelCentralny.setVisible(false);
+        menuStartowe.setVisible(true);
+        panelBoczny.setVisible(false);
+        opisLabel.setText("🔁 Gra zresetowana. Dzień pracy ratownika - przygotuj się!");
         disablePrzyciski(true);
         poleTekstowe.setVisible(false);
         zatwierdzBtn.setVisible(false);

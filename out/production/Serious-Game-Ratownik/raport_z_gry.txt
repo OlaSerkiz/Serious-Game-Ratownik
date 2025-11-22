@@ -5,3 +5,7 @@ Gracz: Ratownik | Punkty: -5 | Data: 2025-10-27 10:14
 Gracz: Ratownik | Punkty: -1 | Data: 2025-10-27 10:14
 Gracz: Ratownik | Punkty: 5 | Data: 2025-10-27 10:17
 Gracz: Ratownik | Punkty: -2 | Data: 2025-11-07 22:48
+Gracz: Ratownik | Punkty: 1 | Data: 2025-11-22 19:57
+Gracz: Ratownik | Punkty: 0 | Data: 2025-11-22 19:57
+Gracz: Ratownik | Punkty: -3 | Data: 2025-11-22 22:11
+Gracz: Ratownik | Punkty: -3 | Data: 2025-11-22 22:46
