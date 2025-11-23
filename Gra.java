@@ -1,78 +1,152 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Gra {
-    private Gracz gracz;
-    private MozliweScenatiusze zarzadca;
-    private Punktacja punktacja;
-    private Czas czas;
-    private Scenariusze aktualny;
+
     private OknoGry okno;
-    private String imie;
+    private Gracz gracz;
+
+    private List<Scenariusze> lista = new ArrayList<>();
+    private int indeks = 0;
 
     public Gra(String imie) {
-        this.gracz = new Gracz(imie);
-        this.zarzadca = new MozliweScenatiusze();
-        this.punktacja = new Punktacja();
-        this.czas = new Czas();
+        gracz = new Gracz(imie);
+        przygotujScenariusze();
     }
 
-    public void ustawOkno(OknoGry okno){
+    public void ustawOkno(OknoGry okno) {
         this.okno = okno;
     }
 
-    public void rozpocznij(){
-        zarzadca.resetuj();
-        wyswietlKolejny();
+    public void rozpocznij() {
+        indeks = 0;
+        gracz.reset();
+        wyswietlBiezacy();
     }
 
     public void resetuj() {
-        gracz = new Gracz(imie);
-        if (okno != null) {
-            okno.aktualizacjaPunktow(0);
-        }
+        indeks = 0;
+        gracz.reset();
+        okno.aktualizacjaPunktow(0);
     }
 
-
-    public void wyswietlKolejny() {
-        if(!zarzadca.maKolejnyScenariusz()) {
-            koniecGry();
-            return;
-        }
-        aktualny = zarzadca.pobierzKolejnyScenariusz();
-        czas.startPomiaru();
-        if (okno != null) okno.wyswietlScenariusz(aktualny);
-    }
-
-    public void roztrzygnijWybor(int indeks, long czasReakciMs) {
-        int ocena = aktualny.ocenOdpowiedz(indeks);
-        int bonus = czas.obliczDodatkowePunkty(czasReakciMs);
-        punktacja.zapiszWynik(gracz, ocena + bonus);
-        /**
-         * zgodnie z założeniem, że gra ma charakter eduakcyjny wprowadzam błąd krytyczny
-         * jeżeli użytkowik ma sume punktów -5 kończy gre
-         */
-        if(ocena <= -5) {
-            if(okno != null) okno.pokazBladKrytyczny();
-            RaportZGry.zapis(gracz);
-            return;
-        }
-
-        if (okno != null) okno.aktualizacjaPunktow(gracz.getPunkty());
-        wyswietlKolejny();
-    }
-
-    private void koniecGry(){
-        if (okno != null) {
+    private void wyswietlBiezacy() {
+        if (indeks >= lista.size()) {
             okno.pokazKoniecDnia(gracz);
+            return;
         }
-        RaportZGry.zapis(gracz);
+        okno.wyswietlScenariusz(lista.get(indeks));
     }
 
-    public void obsluzOdpowiedzTekstowa(String wpisana, long czasReakcji) {
-        int wynik = aktualny.ocenOdpowiedzTekstowa(wpisana);
-        int bonus = czas.obliczDodatkowePunkty(czasReakcji);
-        punktacja.zapiszWynik(gracz, wynik + bonus);
+    public void nastepnePytanie() {
+        indeks++;
+        wyswietlBiezacy();
+    }
+
+    // --------- ROZSTRZYGANIE PYTAŃ ZAMKNIĘTYCH -----------
+
+    public void roztrzygnijWybor(int idx, long czas) {
+
+        Scenariusze s = lista.get(indeks);
+
+        // dobra odpowiedź = indeks 0
+        if (idx == 0) {
+            gracz.dodajPunkty(s.getDobra());
+        }
+        // zła odpowiedź = indeksy większe niż 0
+        else {
+
+            // jeśli krytyczna → koniec gry
+            if (s.isKrytycznaZla()) {
+                okno.pokazBladKrytyczny();
+                return;
+            }
+
+            // zwykła zła → odejmujemy punkty
+            gracz.dodajPunkty(-s.getZla());
+        }
+
         okno.aktualizacjaPunktow(gracz.getPunkty());
-        if (wynik <= -5) okno.pokazBladKrytyczny();
-        else wyswietlKolejny();
+        nastepnePytanie();
     }
 
+
+    // --------- PYTANIA OTWARTE -----------
+
+    public void obsluzOdpowiedzTekstowa(String txt, long czas) {
+
+        Scenariusze s = lista.get(indeks);
+
+        if (!s.isOtwartePytanie()) return;
+
+        if (txt.trim().equalsIgnoreCase(s.getPoprawnaTekstowa())) {
+            gracz.dodajPunkty(s.getDobra());
+        } else {
+            gracz.dodajPunkty(-s.getZla());
+        }
+
+        okno.aktualizacjaPunktow(gracz.getPunkty());
+        nastepnePytanie();
+    }
+
+
+    // --------- INTERAKCJA DRAG & DROP (koło ratunkowe) -----------
+
+    public void poprawnaInterakcja() {
+        Scenariusze s = lista.get(indeks);
+        gracz.dodajPunkty(s.getDobra());
+
+        okno.aktualizacjaPunktow(gracz.getPunkty());
+        nastepnePytanie();
+    }
+
+    public void blednaInterakcja() {
+        Scenariusze s = lista.get(indeks);
+
+        if (s.isKrytycznaZla()) {
+            okno.pokazBladKrytyczny();
+            return;
+        }
+
+        gracz.dodajPunkty(-s.getZla());
+        okno.aktualizacjaPunktow(gracz.getPunkty());
+        nastepnePytanie();
+    }
+
+
+    // --------- LISTA PYTAŃ -----------
+
+    private void przygotujScenariusze() {
+
+        lista.add(new Scenariusze(
+                "Osoba topi się daleko od brzegu. Co robisz?",
+                new String[]{
+                        "Wzywasz pomoc",
+                        "Wskakujesz bez sprzętu",
+                        "Ignorujesz"
+                },
+                TypPytania.ZAMKNIETE,
+                10,    // dobra odpowiedź +10
+                5,     // zła odpowiedź -5
+                true   // krytyczna zła odpowiedź kończy grę
+        ));
+
+
+        lista.add(new Scenariusze(
+                "Jaki skrót ma Wodne Ochotnicze Pogotowie Ratunkowe?",
+                "WOPR",
+                TypPytania.OTWARTE,
+                15,  // dobra
+                0    // zła
+        ));
+
+
+        lista.add(new Scenariusze(
+                "Przeciągnij koło ratunkowe do tonącego.",
+                TypPytania.INTERAKCYJNE,
+                20,   // dobra interakcja
+                false // błędna NIE jest krytyczna
+        ));
+
+    }
 }

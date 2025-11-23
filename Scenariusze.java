@@ -1,47 +1,53 @@
 public class Scenariusze {
-    private String opisy;
+
+    private String opis;
     private String[] odpowiedzi;
-    private int decyzja_poprawna;
-    private int decyzja_krytyczna;
-    private boolean otwartePytanie;
-    private int punkty;
+    private TypPytania typ;
+    private String poprawnaTekstowa;
 
-///    public Scenariusze(String opisy, String[] odpowiedzi, int decyzja_poprawna, int punkty) {
-       /// this(opisy, odpowiedzi, decyzja_poprawna, punkty, false);
-//    }
+    private int dobra;      // punkty za dobrą
+    private int zla;        // punkty za złą
+    private boolean krytycznaZla; // czy błąd krytyczny
 
-    public Scenariusze(String opisy, String[] odpowiedzi, int decyzja_poprawna, int decyzja_krytyczna, boolean otwartePytanie) {
-        this.opisy = opisy;
-        this.odpowiedzi = odpowiedzi;
-        this.decyzja_poprawna = decyzja_poprawna;
-        this.decyzja_krytyczna = decyzja_krytyczna;
-        this.otwartePytanie = otwartePytanie;
+    // pytanie zamknięte
+    public Scenariusze(String opis, String[] odp, TypPytania typ, int dobra, int zla, boolean krytyczna) {
+        this.opis = opis;
+        this.odpowiedzi = odp;
+        this.typ = typ;
+        this.dobra = dobra;
+        this.zla = zla;
+        this.krytycznaZla = krytyczna;
     }
 
-    public boolean isOtwartePytanie(){
-        return otwartePytanie;
+    // pytanie otwarte
+    public Scenariusze(String opis, String poprawna, TypPytania typ, int dobra, int zla) {
+        this.opis = opis;
+        this.poprawnaTekstowa = poprawna;
+        this.typ = typ;
+        this.dobra = dobra;
+        this.zla = zla;
+        this.krytycznaZla = false;
     }
 
-    public String getOpisy() {
-        return opisy;
+    // pytanie interakcyjne
+    public Scenariusze(String opis, TypPytania typ, int dobra, boolean krytyczna) {
+        this.opis = opis;
+        this.typ = typ;
+        this.dobra = dobra;
+        this.zla = 0;
+        this.krytycznaZla = krytyczna;
     }
 
-    public String[] getOdpowiedzi() {
-        return odpowiedzi;
-    }
+    // GETTERY
+    public String getOpisy() { return opis; }
+    public String[] getOdpowiedzi() { return odpowiedzi; }
+    public TypPytania getTyp() { return typ; }
+    public String getPoprawnaTekstowa() { return poprawnaTekstowa; }
+    public int getDobra() { return dobra; }
+    public int getZla() { return zla; }
+    public boolean isKrytycznaZla() { return krytycznaZla; }
 
-    /**
-     * Zwraca punktację określoną czy dobra, zła (np. +3 / -2 / -5)  -> założenie z opisu podejmowanie decyzji
-     */
-    public int ocenOdpowiedz(int index) {
-        return (index == decyzja_poprawna) ? punkty : -punkty / 2;
-    }
-
-    public int ocenOdpowiedzTekstowa(String wpisana) {
-        if (wpisana != null && wpisana.trim().equalsIgnoreCase("WOPR")) {
-            return punkty;
-        } else {
-            return -punkty / 2;
-        }
+    public boolean isOtwartePytanie() {
+        return typ == TypPytania.OTWARTE;
     }
 }

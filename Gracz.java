@@ -1,4 +1,5 @@
 public class Gracz {
+
     private String imie;
     private int punkty;
 
@@ -7,19 +8,24 @@ public class Gracz {
         this.punkty = 0;
     }
 
-    public String getImie(){
+    public String getImie() {
         return imie;
+    }
+
+
+    public void dodajPunkty(int p) {
+        this.punkty += p;
+    }
+
+    public void odejmijPunkty(int p){
+        this.punkty -= p;
     }
 
     public int getPunkty() {
         return punkty;
     }
 
-    public void dodajPunkty(int p){
-        punkty += p;
-    }
-
-    public void odejmijPunkty(int p){
-        punkty -= p;
+    public void reset() {
+        punkty = 0;
     }
 }
