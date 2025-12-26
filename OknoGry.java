@@ -3,6 +3,7 @@ import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -10,317 +11,326 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import java.util.stream.Stream;
-
 
 public class OknoGry extends Application {
+
     private Gra gra;
-    private Label opisLabel;
+    private Label opisLabel, punktyLabel, wynikKoncowyLabel, pasekInstrukcji;
     private Button[] przyciski = new Button[3];
-    private Label punktyLabel;
     private ProgressBar pasekCzasu;
     private Timeline licznik;
     private long czasStart;
-    private final int CZAS_NA_ODPOWIEDZ_MS = 10000; // 10 sekund
-    private TextField poleTekstowe;
-    private Button zatwierdzBtn;
+    private final int CZAS_NA_ODPOWIEDZ_MS = 10000;
 
-    // Przyciski
-    private Button startBtn;
-    private Button stopBtn;
-    private Button resetBtn;
-    private Button wznowBtn;
-
-    // Layouty
-    private BorderPane rootPane;
+    private Button startBtn, stopBtn, resetBtn, wznowBtn, zatwierdzBtn;
+    private TextField poleTekstowe; // Do pytań otwartych
+    private TextField poleImienia;   // DO WPISANIA IMIENIA W MENU
+    private VBox menuStartowe, panelPytania, panelBoczny, panelKoncowy;
     private StackPane centerStack;
-    private VBox menuStartowe;
-    private VBox panelCentralny;
-    private VBox panelBoczny; // po prawej stronie
-
-    public double width = 900;
-    public double height = 600;
+    private Pane panelInterakcji;
+    private ImageView czlowiek;
+    private BorderPane root;
 
     @Override
-    public void start(Stage primaryStage) {
-
+    public void start(Stage stage) {
         gra = new Gra("Ratownik");
         gra.ustawOkno(this);
 
-        // --- TŁO ---
-        Image obrazTla = null;
-        try {
-            obrazTla = new Image(getClass().getResourceAsStream("/images/plaza.jpg"));
-        } catch (Exception ignored) { }
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        double prefW = screenBounds.getWidth() * 0.9;
+        double prefH = screenBounds.getHeight() * 0.9;
 
+        root = new BorderPane();
+        root.setStyle("-fx-background-color: #1a1a1a;");
+
+        // ===== TŁO =====
         centerStack = new StackPane();
-        if (obrazTla != null) {
-            ImageView view = new ImageView(obrazTla);
-            view.setPreserveRatio(false);
-            view.setFitWidth(width);
-            view.setFitHeight(height - 100); // zostaw miejsce na top + bottom
-            centerStack.getChildren().add(view);
-        } else {
-            centerStack.setStyle("-fx-background-color: linear-gradient(to bottom, #87CEEB, #F4E1C1);");
+        try {
+            Image obrazTla = new Image(getClass().getResourceAsStream("/images/plaza.jpg"));
+            BackgroundSize bgSize = new BackgroundSize(100, 100, true, true, false, true);
+            centerStack.setBackground(new Background(new BackgroundImage(obrazTla,
+                    BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, bgSize)));
+        } catch (Exception e) {
+            centerStack.setStyle("-fx-background-color: #34495e;");
         }
 
-        // --- GÓRNY TYTUŁ ---
+        // ===== GÓRNY PASEK TYTUŁOWY =====
         Label tytul = new Label("RATOWNIK — Symulacja szkoleniowa");
-        tytul.setFont(Font.font("Arial", 34));
+        tytul.setFont(Font.font("System", FontWeight.BOLD, 26));
         tytul.setTextFill(Color.WHITE);
-        tytul.setStyle("-fx-effect: dropshadow(gaussian, black, 6, 0, 0, 0); -fx-font-weight: bold;");
+        HBox topBar = new HBox(tytul);
+        topBar.setAlignment(Pos.CENTER);
+        topBar.setPadding(new Insets(15));
+        topBar.setStyle("-fx-background-color: #2c3e50; -fx-border-color: #3498db; -fx-border-width: 0 0 2 0;");
+        root.setTop(topBar);
 
-        StackPane top = new StackPane(tytul);
-        top.setAlignment(Pos.CENTER);
-        top.setPadding(new Insets(12, 0, 12, 0));
-        top.setStyle("-fx-background-color: rgba(0,0,0,0.25);");
-
-        // --- DOLNY PASEK ---
-        punktyLabel = new Label("Punkty: 0");
-        punktyLabel.setTextFill(Color.WHITE);
-        punktyLabel.setFont(Font.font(16));
-
-        pasekCzasu = new ProgressBar(1);
-        pasekCzasu.setPrefWidth(300);
-
-        HBox bottom = new HBox(20, punktyLabel, pasekCzasu);
-        bottom.setAlignment(Pos.CENTER);
-        bottom.setPadding(new Insets(10));
-        bottom.setStyle("-fx-background-color: rgba(0,0,0,0.35);");
-
-        // --- MENU STARTOWE ---
-        startBtn = new Button("▶ START");
-        startBtn.setMinWidth(220);
-        startBtn.setFont(Font.font(18));
-        startBtn.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.95); -fx-border-color: #333; -fx-border-width: 1; -fx-font-weight: bold;"
-        );
-
-        Label powitanie = new Label("Witaj w symulacji pracy ratownika!");
-        powitanie.setFont(Font.font(22));
-        powitanie.setTextFill(Color.WHITE);
-        powitanie.setStyle("-fx-effect: dropshadow(gaussian, black, 4, 0, 0, 0);");
-
-        menuStartowe = new VBox(18, powitanie, startBtn);
-        menuStartowe.setAlignment(Pos.CENTER);
-        menuStartowe.setTranslateY(-80);
-
-        // --- PRZYCISKI BOCZNE (po prawej)
+        // ===== PANEL BOCZNY =====
         wznowBtn = new Button("▶ WZNÓW");
         stopBtn = new Button("⏸ STOP");
         resetBtn = new Button("🔁 RESET");
-
-        Stream.of(wznowBtn, stopBtn, resetBtn).forEach(b -> {
-            b.setPrefWidth(150);
-            b.setFont(Font.font(20));
-            b.setStyle("-fx-background-color: rgba(255,255,255,0.85);"
-                    + "-fx-border-color: black; -fx-border-width: 2;");
-        });
-
-        wznowBtn.setMinWidth(120);
-        stopBtn.setMinWidth(120);
-        resetBtn.setMinWidth(120);
-
-        wznowBtn.setFont(Font.font(14));
-        stopBtn.setFont(Font.font(14));
-        resetBtn.setFont(Font.font(14));
-
-        panelBoczny = new VBox(10, wznowBtn, stopBtn, resetBtn);
-        panelBoczny.setAlignment(Pos.TOP_CENTER);
-        panelBoczny.setPadding(new Insets(20));
-        panelBoczny.setStyle("-fx-background-color: rgba(0,0,0,0.28); -fx-border-color: white; -fx-border-width: 2;");
+        stylizujPrzycisk(wznowBtn, "#2980b9");
+        stylizujPrzycisk(stopBtn, "#f39c12");
+        stylizujPrzycisk(resetBtn, "#c0392b");
+        panelBoczny = new VBox(20, wznowBtn, stopBtn, resetBtn);
+        panelBoczny.setPadding(new Insets(30, 15, 15, 15));
+        panelBoczny.setStyle("-fx-background-color: rgba(44, 62, 80, 0.9); -fx-border-color: #3498db; -fx-border-width: 0 0 0 2;");
         panelBoczny.setVisible(false);
+        root.setRight(panelBoczny);
 
-        panelBoczny.setPrefWidth(180);
-        panelBoczny.setMaxWidth(180);
+        // ===== MENU STARTOWE (Z POLA IMIENIA) =====
+        Label powitanie = new Label("Witaj w symulacji pracy ratownika!");
+        powitanie.setFont(Font.font("System", FontWeight.BOLD, 28));
+        powitanie.setTextFill(Color.WHITE);
+        powitanie.setTextAlignment(TextAlignment.CENTER);
 
-        // akcje bocznych przycisków (podłączymy później do logiki)
-        wznowBtn.setOnAction(e -> wznowGre());
-        stopBtn.setOnAction(e -> zatrzymajGre());
-        resetBtn.setOnAction(e -> resetujGre());
+        poleImienia = new TextField();
+        poleImienia.setPromptText("Wpisz swoje imię...");
+        poleImienia.setMaxWidth(300);
+        poleImienia.setStyle("-fx-font-size: 18; -fx-background-radius: 10;");
 
-        // --- PANEL GRY ---
-        opisLabel = new Label("Dzień pracy ratownika – przygotuj się!");
-        opisLabel.setFont(Font.font(18));
+        startBtn = new Button("ROZPOCZNIJ DYŻUR");
+        stylizujPrzycisk(startBtn, "#27ae60");
+        startBtn.setPrefSize(280, 70);
+
+        menuStartowe = new VBox(30, powitanie, poleImienia, startBtn);
+        menuStartowe.setAlignment(Pos.CENTER);
+        menuStartowe.setStyle("-fx-background-color: rgba(20, 30, 48, 0.95); -fx-background-radius: 30; -fx-padding: 60; -fx-border-color: #27ae60; -fx-border-width: 3;");
+        menuStartowe.setMaxWidth(650);
+
+        // ===== PASEK INSTRUKCJI =====
+        pasekInstrukcji = new Label();
+        pasekInstrukcji.setFont(Font.font("System", FontWeight.BOLD, 20));
+        pasekInstrukcji.setTextFill(Color.CYAN);
+        pasekInstrukcji.setStyle("-fx-background-color: rgba(0,0,0,0.85); -fx-padding: 20; -fx-background-radius: 0 0 30 30;");
+        pasekInstrukcji.setVisible(false);
+        StackPane.setAlignment(pasekInstrukcji, Pos.TOP_CENTER);
+
+        // ===== PANEL PYTANIA =====
+        opisLabel = new Label();
+        opisLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
         opisLabel.setTextFill(Color.WHITE);
         opisLabel.setWrapText(true);
-        opisLabel.setMaxWidth(700);
-        opisLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 3, 0, 0, 0);");
+        opisLabel.setTextAlignment(TextAlignment.CENTER);
 
-        VBox odpowiedziBox = new VBox(10);
-        odpowiedziBox.setAlignment(Pos.CENTER);
-
+        VBox boxOdp = new VBox(15);
+        boxOdp.setAlignment(Pos.CENTER);
         for (int i = 0; i < 3; i++) {
-            Button b = new Button("Odpowiedź " + (i + 1));
-            b.setMinWidth(600);
-            b.setFont(Font.font(14));
             final int idx = i;
-            b.setOnAction(ev -> {
-                zatrzymajLicznik();
-                long czasReakcji = System.currentTimeMillis() - czasStart;
-                disablePrzyciski(true);
-                gra.roztrzygnijWybor(idx, czasReakcji);
-            });
-            przyciski[i] = b;
-            odpowiedziBox.getChildren().add(b);
+            przyciski[i] = new Button();
+            przyciski[i].setMinWidth(500);
+            stylizujPrzycisk(przyciski[i], "#3498db");
+            przyciski[i].setOnAction(e -> { stopLicznik(); gra.roztrzygnijWybor(idx, System.currentTimeMillis() - czasStart); });
+            boxOdp.getChildren().add(przyciski[i]);
         }
 
         poleTekstowe = new TextField();
         poleTekstowe.setPromptText("Wpisz odpowiedź...");
-        poleTekstowe.setMaxWidth(300);
-        poleTekstowe.setVisible(false);
+        poleTekstowe.setMaxWidth(350);
+        poleTekstowe.setStyle("-fx-font-size: 20;");
 
-        zatwierdzBtn = new Button("Zatwierdź");
-        zatwierdzBtn.setVisible(false);
-        zatwierdzBtn.setOnAction(e -> {
-            String wpisana = poleTekstowe.getText();
-            zatrzymajLicznik();
-            long czasReakcji = System.currentTimeMillis() - czasStart;
-            gra.obsluzOdpowiedzTekstowa(wpisana, czasReakcji);
-            poleTekstowe.clear();
-            poleTekstowe.setVisible(false);
-            zatwierdzBtn.setVisible(false);
+        zatwierdzBtn = new Button("ZATWIERDŹ");
+        stylizujPrzycisk(zatwierdzBtn, "#8e44ad");
+        zatwierdzBtn.setOnAction(e -> { stopLicznik(); gra.obsluzOdpowiedzTekstowa(poleTekstowe.getText(), System.currentTimeMillis() - czasStart); });
+
+        panelPytania = new VBox(25, opisLabel, boxOdp, poleTekstowe, zatwierdzBtn);
+        panelPytania.setAlignment(Pos.CENTER);
+        panelPytania.setStyle("-fx-background-color: rgba(20, 30, 48, 0.95); -fx-background-radius: 30; -fx-padding: 40;");
+        panelPytania.setVisible(false);
+
+        // ===== PANEL KOŃCOWY =====
+        wynikKoncowyLabel = new Label();
+        wynikKoncowyLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
+        wynikKoncowyLabel.setTextAlignment(TextAlignment.CENTER);
+
+        Button ponownaGraBtn = new Button("ZAGRAJ PONOWNIE");
+        stylizujPrzycisk(ponownaGraBtn, "#27ae60");
+        ponownaGraBtn.setOnAction(e -> resetujGre());
+
+        panelKoncowy = new VBox(25, new Label("PODSUMOWANIE"), wynikKoncowyLabel, ponownaGraBtn);
+        panelKoncowy.setAlignment(Pos.CENTER);
+        panelKoncowy.setStyle("-fx-background-color: rgba(10, 10, 20, 0.98); -fx-background-radius: 30; -fx-padding: 50;");
+        panelKoncowy.setVisible(false);
+
+        // ===== PANEL INTERAKCJI =====
+        /// tu jest jeszcze do zmiany bo ten człowiek jest cały czas na środku
+        panelInterakcji = new Pane();
+        czlowiek = createImg("czlowiek.png", 650, 220);
+        panelInterakcji.setVisible(false);
+
+        // ===== DOLNY PASEK STATUSU =====
+        punktyLabel = new Label("PUNKTY: 0");
+        punktyLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
+        punktyLabel.setTextFill(Color.WHITE);
+        pasekCzasu = new ProgressBar(1.0);
+        pasekCzasu.setPrefWidth(500);
+        HBox bottomBar = new HBox(60, punktyLabel, pasekCzasu);
+        bottomBar.setAlignment(Pos.CENTER);
+        bottomBar.setPadding(new Insets(20));
+        bottomBar.setStyle("-fx-background-color: #2c3e50;");
+        root.setBottom(bottomBar);
+
+        centerStack.getChildren().addAll(panelInterakcji, pasekInstrukcji, menuStartowe, panelPytania, panelKoncowy);
+        root.setCenter(centerStack);
+
+        Scene scene = new Scene(root, prefW, prefH);
+        stage.setScene(scene);
+        stage.setTitle("Ratownik - Symulacja szkoleniowa");
+
+        startBtn.setOnAction(e -> {
+            String imie = poleImienia.getText().trim();
+            if (imie.isEmpty()) imie = "Ratownik";
+
+            gra = new Gra(imie);
+            gra.ustawOkno(this);
+
+            menuStartowe.setVisible(false);
+            panelBoczny.setVisible(true);
+            gra.rozpocznij();
         });
 
-        panelCentralny = new VBox(15, opisLabel, odpowiedziBox, poleTekstowe, zatwierdzBtn);
-        panelCentralny.setAlignment(Pos.CENTER);
-        panelCentralny.setPadding(new Insets(20));
-        panelCentralny.setVisible(false);
-
-        centerStack.getChildren().addAll(menuStartowe, panelCentralny);
-
-        // --- GŁÓWNY UKŁAD ---
-        rootPane = new BorderPane();
-        rootPane.setTop(top);
-        rootPane.setCenter(centerStack);
-        rootPane.setRight(panelBoczny);
-        rootPane.setBottom(bottom);
-
-        Scene scena = new Scene(rootPane, width, height, Color.LIGHTBLUE);
-        primaryStage.setTitle("Ratownik - gra szkoleniowa");
-        primaryStage.setScene(scena);
-        primaryStage.show();
-
-        startBtn.setOnAction(e -> uruchomGre());
-
-        disablePrzyciski(true);
+        resetBtn.setOnAction(e -> resetujGre());
+        stage.show();
     }
 
-    // ============================= LOGIKA =============================
-
-    private void uruchomGre() {
-        // pokaż panel gry, ukryj menu startowe, pokaż panel boczny
-        menuStartowe.setVisible(false);
-        panelCentralny.setVisible(true);
-        panelBoczny.setVisible(true);
-
-        // włącz boczne przyciski (stop/reset/wznów)
-        stopBtn.setDisable(false);
-        resetBtn.setDisable(false);
-        wznowBtn.setDisable(false);
-
-        // odblokuj przyciski odpowiedzi i rozpocznij logikę gry
-        disablePrzyciski(true);
-        gra.rozpocznij();
+    private void stylizujPrzycisk(Button b, String kolor) {
+        b.setStyle("-fx-background-color: " + kolor + "; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-background-radius: 15; -fx-cursor: hand;");
     }
 
-    private void wznowGre() {
+    public void wyswietlScenariusz(Scenariusze s) {
+        panelInterakcji.setVisible(false);
+        panelPytania.setVisible(false);
+        panelKoncowy.setVisible(false);
+        pasekInstrukcji.setVisible(false);
         startLicznik();
-        opisLabel.setText("▶ Gra wznowiona. Działaj dalej!");
-        disablePrzyciski(false);
+
+        if (s.isInterakcyjne()) {
+            panelInterakcji.setVisible(true);
+            pasekInstrukcji.setVisible(true);
+            pasekInstrukcji.setText(s.getOpisy());
+            ladujObrazkiInterakcyjne(s);
+        } else {
+            panelPytania.setVisible(true);
+            opisLabel.setText(s.getOpisy());
+            if (s.isOtwartePytanie()) {
+                poleTekstowe.clear();
+                poleTekstowe.setVisible(true);
+                zatwierdzBtn.setVisible(true);
+                for (Button b : przyciski) b.setVisible(false);
+            } else {
+                poleTekstowe.setVisible(false);
+                zatwierdzBtn.setVisible(false);
+                for (int i = 0; i < 3; i++) {
+                    przyciski[i].setText(s.getOdpowiedzi()[i]);
+                    przyciski[i].setVisible(true);
+                }
+            }
+        }
     }
 
-    private void zatrzymajGre() {
-        zatrzymajLicznik();
-        disablePrzyciski(true);
-        opisLabel.setText("⏸ Gra zatrzymana.");
+    private void ladujObrazkiInterakcyjne(Scenariusze s) {
+        panelInterakcji.getChildren().clear();
+        panelInterakcji.getChildren().add(czlowiek);
+
+        double p1X = 100, p2X = 300, p3X = 500;
+
+        if (s.getOpisy().toLowerCase().contains("burza")) {
+            panelInterakcji.getChildren().add(createDragImg("czerwonaflaga.png", p1X, 450, true));
+            panelInterakcji.getChildren().add(createDragImg("bialaflaga.png", p2X, 350, false));
+            panelInterakcji.getChildren().add(createDragImg("zoltaflaga.png", p1X, 250, true));
+        } else if (s.getOpisy().toLowerCase().contains("koło")){
+            panelInterakcji.getChildren().add(createDragImg("kolo.png", p1X, 450, true));
+            panelInterakcji.getChildren().add(createDragImg("pilka.png", p2X, 350, false));
+            panelInterakcji.getChildren().add(createDragImg("recznik.png", p2X, 250, false));
+        } else if (s.getOpisy().toLowerCase().contains("aed") || s.getOpisy().toLowerCase().contains("defibrylator")){
+            panelInterakcji.getChildren().add(createDragImg("defibrylator.png", p1X, 450, true));
+            panelInterakcji.getChildren().add(createDragImg("tlen.png", p2X, 350, false));
+            panelInterakcji.getChildren().add(createDragImg("strzykawka.png", p2X, 250, false));
+        } else {
+            panelInterakcji.getChildren().add(createDragImg("lornetka.png", p1X, 450, true));
+            panelInterakcji.getChildren().add(createDragImg("okulary.png", p2X, 350, false));
+            panelInterakcji.getChildren().add(createDragImg("teleskop.png", p2X, 250, false));
+        }
+    }
+
+    public void pokazKoniecDnia(Gracz g) {
+        stopLicznik();
+        panelPytania.setVisible(false);
+        panelInterakcji.setVisible(false);
+        pasekInstrukcji.setVisible(false);
+        wynikKoncowyLabel.setText("DZIĘKUJEMY ZA DZIEŃ W PRACY, " + g.getImie() + "!\nTWÓJ WYNIK: " + g.getPunkty() + " PKT");
+        wynikKoncowyLabel.setTextFill(Color.GOLD);
+        panelKoncowy.setVisible(true);
+    }
+
+    public void pokazBladKrytyczny() {
+        stopLicznik();
+        panelPytania.setVisible(false);
+        panelInterakcji.setVisible(false);
+        pasekInstrukcji.setVisible(false);
+        wynikKoncowyLabel.setText("BŁĄD KRYTYCZNY!\nZOSTAJESZ ZWOLNIONY DYSCYPLINARNIE.");
+        wynikKoncowyLabel.setTextFill(Color.RED);
+        panelKoncowy.setVisible(true);
     }
 
     private void resetujGre() {
-        zatrzymajLicznik();
+        stopLicznik();
         gra.resetuj();
-        panelCentralny.setVisible(false);
-        menuStartowe.setVisible(true);
+        panelPytania.setVisible(false);
+        panelKoncowy.setVisible(false);
         panelBoczny.setVisible(false);
-        opisLabel.setText("🔁 Gra zresetowana. Dzień pracy ratownika - przygotuj się!");
-        disablePrzyciski(true);
-        poleTekstowe.setVisible(false);
-        zatwierdzBtn.setVisible(false);
-    }
-
-    private void disablePrzyciski(boolean stan) {
-        for (Button b : przyciski) if (b != null) b.setDisable(stan);
+        menuStartowe.setVisible(true);
+        aktualizacjaPunktow(0);
     }
 
     private void startLicznik() {
-        pasekCzasu.setProgress(1.0);
-        if (licznik != null) licznik.stop();
-        final int ms = CZAS_NA_ODPOWIEDZ_MS;
+        stopLicznik();
         czasStart = System.currentTimeMillis();
-        licznik = new Timeline(new KeyFrame(Duration.millis(50), evt -> {
+        licznik = new Timeline(new KeyFrame(Duration.millis(50), e -> {
             long uplynelo = System.currentTimeMillis() - czasStart;
-            double frac = 1.0 - ((double) uplynelo / ms);
-            pasekCzasu.setProgress(Math.max(0, frac));
-            if (uplynelo >= ms) {
-                zatrzymajLicznik();
-                disablePrzyciski(true);
-                gra.roztrzygnijWybor(1, ms); // domyślne wybieranie po czasie
+            double postep = 1.0 - ((double) uplynelo / CZAS_NA_ODPOWIEDZ_MS);
+            pasekCzasu.setProgress(Math.max(0, postep));
+            if (uplynelo >= CZAS_NA_ODPOWIEDZ_MS) {
+                stopLicznik();
+                gra.roztrzygnijWybor(-1, CZAS_NA_ODPOWIEDZ_MS);
             }
         }));
         licznik.setCycleCount(Timeline.INDEFINITE);
         licznik.play();
     }
 
-    private void zatrzymajLicznik() {
-        if (licznik != null) licznik.stop();
+    private void stopLicznik() { if (licznik != null) licznik.stop(); }
+    public void aktualizacjaPunktow(int p) { punktyLabel.setText("PUNKTY: " + p); }
+
+    private ImageView createImg(String name, double x, double y) {
+        try {
+            Image img = new Image(getClass().getResourceAsStream("/images/" + name));
+            ImageView iv = new ImageView(img);
+            iv.setFitWidth(120); iv.setFitHeight(120);
+            iv.setPreserveRatio(true);
+            iv.setLayoutX(x); iv.setLayoutY(y);
+            return iv;
+        } catch (Exception e) { return new ImageView(); }
     }
 
-    public void pokazBladKrytyczny() {
-        opisLabel.setText("❌ Popełniłeś krytyczny błąd! Koniec gry.");
-        disablePrzyciski(true);
-        poleTekstowe.setVisible(false);
-        zatwierdzBtn.setVisible(false);
-    }
-
-    public void pokazKoniecDnia(Gracz g) {
-        opisLabel.setText("🏁 Koniec dnia. Wynik: " + g.getPunkty() + " pkt");
-        disablePrzyciski(true);
-        poleTekstowe.setVisible(false);
-        zatwierdzBtn.setVisible(false);
-    }
-
-    public void aktualizacjaPunktow(int punkty) {
-        punktyLabel.setText("Punkty: " + punkty);
-    }
-
-    public void wyswietlScenariusz(Scenariusze s) {
-        // pokaz scenariusz i włącz licznik
-        opisLabel.setText("📢 " + s.getOpisy());
-        startLicznik();
-
-        if (s.isOtwartePytanie()) {
-            // pytanie otwarte
-            for (Button b : przyciski) if (b != null) b.setVisible(false);
-            poleTekstowe.setVisible(true);
-            zatwierdzBtn.setVisible(true);
-        } else {
-            // pytanie zamknięte (przyciski)
-            poleTekstowe.setVisible(false);
-            zatwierdzBtn.setVisible(false);
-            String[] odp = s.getOdpowiedzi();
-            for (int i = 0; i < 3; i++) {
-                if (przyciski[i] != null) {
-                    przyciski[i].setText((i + 1) + ". " + (i < odp.length && odp[i] != null ? odp[i] : ""));
-                    przyciski[i].setVisible(true);
-                    przyciski[i].setDisable(false);
-                }
+    private ImageView createDragImg(String name, double x, double y, boolean ok) {
+        ImageView iv = createImg(name, x, y);
+        iv.setCursor(javafx.scene.Cursor.HAND);
+        iv.setOnMouseDragged(e -> {
+            iv.setLayoutX(iv.getLayoutX() + e.getX() - 60);
+            iv.setLayoutY(iv.getLayoutY() + e.getY() - 60);
+        });
+        iv.setOnMouseReleased(e -> {
+            if (iv.getBoundsInParent().intersects(czlowiek.getBoundsInParent())) {
+                if(ok) gra.poprawnaInterakcja(); else gra.blednaInterakcja();
             }
-        }
+        });
+        return iv;
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    public static void main(String[] args) { launch(args); }
 }

@@ -1,152 +1,74 @@
-import java.util.ArrayList;
-import java.util.List;
-
 public class Gra {
-
     private OknoGry okno;
     private Gracz gracz;
-
-    private List<Scenariusze> lista = new ArrayList<>();
-    private int indeks = 0;
+    private MozliweScenatiusze scenariusze;
+    private Scenariusze aktualny;
+    private String imieRatownika;
 
     public Gra(String imie) {
-        gracz = new Gracz(imie);
-        przygotujScenariusze();
+        this.imieRatownika = imie;
+        this.gracz = new Gracz(imie);
+        this.scenariusze = new MozliweScenatiusze();
     }
 
-    public void ustawOkno(OknoGry okno) {
-        this.okno = okno;
-    }
+    public void ustawOkno(OknoGry okno) { this.okno = okno; }
 
     public void rozpocznij() {
-        indeks = 0;
         gracz.reset();
-        wyswietlBiezacy();
+        scenariusze.resetuj();
+        nastepny();
     }
 
     public void resetuj() {
-        indeks = 0;
-        gracz.reset();
-        okno.aktualizacjaPunktow(0);
+        this.gracz = new Gracz(imieRatownika);
+        this.scenariusze.resetuj();
     }
 
-    private void wyswietlBiezacy() {
-        if (indeks >= lista.size()) {
+    private void nastepny() {
+        aktualny = scenariusze.nastepny();
+        if (aktualny == null) {
+            RaportZGry.zapis(gracz); // Zapis przy wygranej
             okno.pokazKoniecDnia(gracz);
             return;
         }
-        okno.wyswietlScenariusz(lista.get(indeks));
+        okno.wyswietlScenariusz(aktualny);
     }
-
-    public void nastepnePytanie() {
-        indeks++;
-        wyswietlBiezacy();
-    }
-
-    // --------- ROZSTRZYGANIE PYTAŃ ZAMKNIĘTYCH -----------
 
     public void roztrzygnijWybor(int idx, long czas) {
-
-        Scenariusze s = lista.get(indeks);
-
-        // dobra odpowiedź = indeks 0
-        if (idx == 0) {
-            gracz.dodajPunkty(s.getDobra());
+        if (idx == -1) { przegrana(); return; }
+        if (aktualny.sprawdzCzyPoprawna(idx)) {
+            gracz.dodajPunkty(10);
+            okno.aktualizacjaPunktow(gracz.getPunkty());
+            nastepny();
+        } else if (aktualny.isKrytyczna()) {
+            przegrana();
+        } else {
+            gracz.odejmijPunkty(5);
+            okno.aktualizacjaPunktow(gracz.getPunkty());
+            nastepny();
         }
-        // zła odpowiedź = indeksy większe niż 0
-        else {
-
-            // jeśli krytyczna → koniec gry
-            if (s.isKrytycznaZla()) {
-                okno.pokazBladKrytyczny();
-                return;
-            }
-
-            // zwykła zła → odejmujemy punkty
-            gracz.dodajPunkty(-s.getZla());
-        }
-
-        okno.aktualizacjaPunktow(gracz.getPunkty());
-        nastepnePytanie();
     }
-
-
-    // --------- PYTANIA OTWARTE -----------
 
     public void obsluzOdpowiedzTekstowa(String txt, long czas) {
-
-        Scenariusze s = lista.get(indeks);
-
-        if (!s.isOtwartePytanie()) return;
-
-        if (txt.trim().equalsIgnoreCase(s.getPoprawnaTekstowa())) {
-            gracz.dodajPunkty(s.getDobra());
+        if (aktualny.poprawnaTekst(txt)) {
+            gracz.dodajPunkty(15);
+            okno.aktualizacjaPunktow(gracz.getPunkty());
+            nastepny();
         } else {
-            gracz.dodajPunkty(-s.getZla());
+            przegrana();
         }
-
-        okno.aktualizacjaPunktow(gracz.getPunkty());
-        nastepnePytanie();
     }
-
-
-    // --------- INTERAKCJA DRAG & DROP (koło ratunkowe) -----------
 
     public void poprawnaInterakcja() {
-        Scenariusze s = lista.get(indeks);
-        gracz.dodajPunkty(s.getDobra());
-
+        gracz.dodajPunkty(20);
         okno.aktualizacjaPunktow(gracz.getPunkty());
-        nastepnePytanie();
+        nastepny();
     }
 
-    public void blednaInterakcja() {
-        Scenariusze s = lista.get(indeks);
+    public void blednaInterakcja() { przegrana(); }
 
-        if (s.isKrytycznaZla()) {
-            okno.pokazBladKrytyczny();
-            return;
-        }
-
-        gracz.dodajPunkty(-s.getZla());
-        okno.aktualizacjaPunktow(gracz.getPunkty());
-        nastepnePytanie();
-    }
-
-
-    // --------- LISTA PYTAŃ -----------
-
-    private void przygotujScenariusze() {
-
-        lista.add(new Scenariusze(
-                "Osoba topi się daleko od brzegu. Co robisz?",
-                new String[]{
-                        "Wzywasz pomoc",
-                        "Wskakujesz bez sprzętu",
-                        "Ignorujesz"
-                },
-                TypPytania.ZAMKNIETE,
-                10,    // dobra odpowiedź +10
-                5,     // zła odpowiedź -5
-                true   // krytyczna zła odpowiedź kończy grę
-        ));
-
-
-        lista.add(new Scenariusze(
-                "Jaki skrót ma Wodne Ochotnicze Pogotowie Ratunkowe?",
-                "WOPR",
-                TypPytania.OTWARTE,
-                15,  // dobra
-                0    // zła
-        ));
-
-
-        lista.add(new Scenariusze(
-                "Przeciągnij koło ratunkowe do tonącego.",
-                TypPytania.INTERAKCYJNE,
-                20,   // dobra interakcja
-                false // błędna NIE jest krytyczna
-        ));
-
+    private void przegrana() {
+        RaportZGry.zapis(gracz); // Zapis przy błędzie
+        okno.pokazBladKrytyczny();
     }
 }

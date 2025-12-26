@@ -8,21 +8,20 @@ public class Gracz {
         this.punkty = 0;
     }
 
-    public String getImie() {
-        return imie;
-    }
-
-
     public void dodajPunkty(int p) {
-        this.punkty += p;
+        punkty += p;
     }
 
-    public void odejmijPunkty(int p){
-        this.punkty -= p;
+    public void odejmijPunkty(int p) {
+        punkty -= p;
     }
 
     public int getPunkty() {
         return punkty;
+    }
+
+    public String getImie() {
+        return imie;
     }
 
     public void reset() {
