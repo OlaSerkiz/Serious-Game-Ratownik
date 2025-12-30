@@ -7,7 +7,7 @@ public class Gra {
 
     private int poziom = 1; // 1: Zamknięte, 2: Otwarte, 3: Iteracyjne (Interakcyjne)
     private int licznikPytanPoziomu = 0;
-    private final int MAX_PYTAN_NA_POZIOM = 3; // Możesz to zmienić na np. 5
+    private final int MAX_PYTAN_NA_POZIOM = 6; // Możesz to zmienić na np. 5
 
     public Gra(String imie) {
         this.imieRatownika = imie;

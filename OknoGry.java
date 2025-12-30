@@ -33,7 +33,7 @@ public class OknoGry extends Application {
     private VBox menuStartowe, panelPytania, panelBoczny, panelKoncowy;
     private StackPane centerStack;
     private Pane panelInterakcji;
-    private ImageView czlowiek;
+    private ImageView celInterakcji;
     private BorderPane root;
 
     private boolean czyPauza = false;
@@ -51,7 +51,6 @@ public class OknoGry extends Application {
         root = new BorderPane();
         root.setStyle("-fx-background-color: #1a1a1a;");
 
-        // ===== TŁO GŁÓWNE =====
         centerStack = new StackPane();
         try {
             Image obrazTla = new Image(getClass().getResourceAsStream("/images/plaza.jpg"));
@@ -62,7 +61,6 @@ public class OknoGry extends Application {
             centerStack.setStyle("-fx-background-color: #34495e;");
         }
 
-        // ===== GÓRNY PASEK =====
         Label tytul = new Label("RATOWNIK — Symulacja szkoleniowa");
         tytul.setFont(Font.font("System", FontWeight.BOLD, 26));
         tytul.setTextFill(Color.WHITE);
@@ -72,7 +70,6 @@ public class OknoGry extends Application {
         topBar.setStyle("-fx-background-color: #2c3e50; -fx-border-color: #3498db; -fx-border-width: 0 0 2 0;");
         root.setTop(topBar);
 
-        // ===== PANEL BOCZNY =====
         wznowBtn = new Button("▶ WZNÓW");
         stopBtn = new Button("⏸ STOP");
         resetBtn = new Button("🔁 RESET");
@@ -85,7 +82,6 @@ public class OknoGry extends Application {
         panelBoczny.setVisible(false);
         root.setRight(panelBoczny);
 
-        // ===== MENU STARTOWE =====
         Label powitanie = new Label("Witaj w symulacji pracy ratownika!");
         powitanie.setFont(Font.font("System", FontWeight.BOLD, 28));
         powitanie.setTextFill(Color.WHITE);
@@ -105,7 +101,6 @@ public class OknoGry extends Application {
         menuStartowe.setStyle("-fx-background-color: rgba(20, 30, 48, 0.95); -fx-background-radius: 30; -fx-padding: 60; -fx-border-color: #27ae60; -fx-border-width: 3;");
         menuStartowe.setMaxWidth(650);
 
-        // ===== PASEK INSTRUKCJI =====
         pasekInstrukcji = new Label();
         pasekInstrukcji.setFont(Font.font("System", FontWeight.BOLD, 20));
         pasekInstrukcji.setTextFill(Color.CYAN);
@@ -113,7 +108,6 @@ public class OknoGry extends Application {
         pasekInstrukcji.setVisible(false);
         StackPane.setAlignment(pasekInstrukcji, Pos.TOP_CENTER);
 
-        // ===== PANEL PYTANIA =====
         opisLabel = new Label();
         opisLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
         opisLabel.setTextFill(Color.WHITE);
@@ -134,8 +128,8 @@ public class OknoGry extends Application {
         poleTekstowe = new TextField();
         poleTekstowe.setPromptText("Wpisz odpowiedź...");
         poleTekstowe.setMaxWidth(350);
-        poleTekstowe.setStyle("-fx-font-size: 20;");
         poleTekstowe.setOnAction(e -> zatwierdzBtn.fire());
+        poleTekstowe.setStyle("-fx-font-size: 20;");
 
         zatwierdzBtn = new Button("ZATWIERDŹ");
         stylizujPrzycisk(zatwierdzBtn, "#8e44ad");
@@ -149,7 +143,6 @@ public class OknoGry extends Application {
         panelPytania.setStyle("-fx-background-color: rgba(20, 30, 48, 0.95); -fx-background-radius: 30; -fx-padding: 40;");
         panelPytania.setVisible(false);
 
-        // ===== PANEL KOŃCOWY =====
         wynikKoncowyLabel = new Label();
         wynikKoncowyLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
         wynikKoncowyLabel.setTextAlignment(TextAlignment.CENTER);
@@ -163,12 +156,9 @@ public class OknoGry extends Application {
         panelKoncowy.setStyle("-fx-background-color: rgba(10, 10, 20, 0.98); -fx-background-radius: 30; -fx-padding: 50;");
         panelKoncowy.setVisible(false);
 
-        // ===== PANEL INTERAKCJI =====
         panelInterakcji = new Pane();
         panelInterakcji.setVisible(false);
-        czlowiek = createImg("czlowiek.png", 375, 150);
 
-        // ===== DOLNY PASEK STATUSU =====
         punktyLabel = new Label("PUNKTY: 0");
         punktyLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
         punktyLabel.setTextFill(Color.WHITE);
@@ -183,7 +173,6 @@ public class OknoGry extends Application {
         centerStack.getChildren().addAll(panelInterakcji, pasekInstrukcji, menuStartowe, panelPytania, panelKoncowy);
         root.setCenter(centerStack);
 
-        // Akcje przycisków
         startBtn.setOnAction(e -> {
             String imie = poleImienia.getText().trim();
             if (imie.isEmpty()) imie = "Ratownik";
@@ -224,79 +213,118 @@ public class OknoGry extends Application {
 
     private void ladujObrazkiInterakcyjne(Scenariusze s) {
         panelInterakcji.getChildren().clear();
-        panelInterakcji.setStyle("-fx-background-color: transparent;");
-        panelInterakcji.setMaxSize(850, 440); // 440 (woda) + 60 (pasek polecenia)
+        panelInterakcji.setMaxSize(850, 440);
         StackPane.setAlignment(panelInterakcji, Pos.CENTER);
-        // SCENA MORZA
-        Pane scenaMorza = new Pane();
-        scenaMorza.setPrefSize(850, 440);
-        scenaMorza.setLayoutY(0);
 
-        scenaMorza.setStyle("-fx-background-color: #3498db; -fx-background-radius: 0 0 20 20; -fx-border-color: #3498db; -fx-border-width: 0 2 2 2;");
+        Pane scena = new Pane();
+        scena.setPrefSize(850, 440);
 
-        try {
-            java.io.InputStream is = getClass().getResourceAsStream("/images/woda.jpg");
-            if (is != null) {
-                Image imgWody = new Image(is);
-                ImageView tloWody = new ImageView(imgWody);
-                tloWody.setFitWidth(850);
-                tloWody.setFitHeight(440);
+        // DOMYŚLNE WARTOŚCI (MORZE)
+        String tloPlik = "/images/woda.jpg";
+        double celX = 375, celY = 120;
+        String celGrafika = "czlowiek.png";
 
-                tloWody.setLayoutX(0);
-                tloWody.setLayoutY(0);
-                scenaMorza.getChildren().add(tloWody);
-
-                Rectangle clipTla = new Rectangle(850, 440);
-                clipTla.setArcWidth(40);
-                clipTla.setArcHeight(40);
-                tloWody.setClip(clipTla);
-
-                System.out.println("ImageView wody dodany do sceny.");
+        // MECHANIZM SWITCH - TUTAJ ROZPOZNAJEMY SCENĘ
+        if (s.getScenaTyp() != null) {
+            switch (s.getScenaTyp()) {
+                case "WIEZA":
+                    tloPlik = "/images/plaza_wieza.jpg"; // Twoje tło plaży
+                    celX = 290; celY = 160;
+                    celGrafika = "wieza.png";
+                    break;
+                case "MORZE":
+                    tloPlik = "/images/woda.jpg";
+                    celX = 375; celY = 120;
+                    celGrafika = "czlowiek.png";
+                    break;
+                case "PIERWSZA_POMOC":
+                    tloPlik = "/images/plaza_blisko.jpg"; // Zdjęcie piasku/koca
+                    celX = 400; celY = 200;
+                    celGrafika = "poszkodowany.png"; // Grafika leżącej osoby
+                    break;
+                case "HORYZONT":
+                    tloPlik = "/images/obserwacja.jpg"; // Zdjęcie piasku/koca
+                    celX = 400; celY = 200;
+                    celGrafika = "ratownik.png"; // Grafika leżącej osoby
+                    break;
             }
-        } catch (Exception e) {
-            System.out.println("Błąd ImageView: " + e.getMessage());
         }
 
-        //  TONĄCY
-        czlowiek.setLayoutX(375);
-        czlowiek.setLayoutY(120);
-        Rectangle clip = new Rectangle(0, 0, 120, 90);
-        czlowiek.setClip(clip);
-        scenaMorza.getChildren().add(czlowiek);
+        // 1. ŁADOWANIE TŁA
+        try {
+            Image imgTla = new Image(getClass().getResourceAsStream(tloPlik));
+            ImageView tloView = new ImageView(imgTla);
+            tloView.setFitWidth(850); tloView.setFitHeight(440);
+            scena.getChildren().add(tloView);
+        } catch (Exception e) {
+            System.out.println("Błąd tła: " + tloPlik);
+        }
 
-        // Animacja
-        TranslateTransition tt = new TranslateTransition(Duration.seconds(1.5), czlowiek);
-        tt.setByY(10);
-        tt.setCycleCount(Animation.INDEFINITE);
-        tt.setAutoReverse(true);
-        tt.play();
+        // 2. ŁADOWANIE CELU
+        celInterakcji = createImg(celGrafika, celX, celY);
+        celInterakcji.setFitWidth(150);  // Powiększenie wieży/człowieka
+        celInterakcji.setFitHeight(150);
+        celInterakcji.setPreserveRatio(true);
 
-        //  PRZEDMIOTY
-        double startY = 320;
-        scenaMorza.getChildren().addAll(
-                createDragImg("kolo.png", 150, startY, true, scenaMorza),
-                createDragImg("pilka.png", 400, startY, false, scenaMorza),
-                createDragImg("recznik.png", 650, startY, false, scenaMorza)
-        );
+        if (celGrafika.equals("czlowiek.png")) {
+            Rectangle clip = new Rectangle(0, 0, 120, 90);
+            celInterakcji.setClip(clip);
+            TranslateTransition tt = new TranslateTransition(Duration.seconds(1.5), celInterakcji);
+            tt.setByY(10); tt.setCycleCount(Animation.INDEFINITE); tt.setAutoReverse(true); tt.play();
+        }
+        scena.getChildren().add(celInterakcji);
 
-        panelInterakcji.getChildren().addAll( scenaMorza);
+        // 3. ŁADOWANIE PRZEDMIOTÓW (FLAGI/KOŁA)
+        String[] grafiki = s.getGrafikiInterakcyjne();
+        if (grafiki != null) {
+            for (int i = 0; i < grafiki.length; i++) {
+                boolean ok = grafiki[i].equals(s.getPoprawnaGrafika());
+                ImageView item = createDragImg(grafiki[i], 100 + (i * 250), 320, ok, scena);
+                scena.getChildren().add(item);
+            }
+        }
+
+        // 4. EFEKT BŁYSKU DLA BURZY
+        if (s.getOpisy().toLowerCase().contains("burza")) {
+            PauseTransition delay = new PauseTransition(Duration.seconds(1));
+            delay.setOnFinished(e -> efektBlysku(scena));
+            delay.play();
+        }
+
+        panelInterakcji.getChildren().add(scena);
+    }
+
+    private void efektBlysku(Pane scena) {
+        Rectangle blysk = new Rectangle(0, 0, 850, 440);
+        blysk.setFill(Color.WHITE);
+        blysk.setOpacity(0);
+        scena.getChildren().add(blysk);
+
+        FadeTransition ft = new FadeTransition(Duration.millis(100), blysk);
+        ft.setFromValue(0);
+        ft.setToValue(0.8);
+        ft.setCycleCount(4);
+        ft.setAutoReverse(true);
+        ft.setOnFinished(e -> scena.getChildren().remove(blysk));
+        ft.play();
     }
 
     private ImageView createDragImg(String name, double x, double y, boolean ok, Pane target) {
         ImageView iv = createImg(name, x, y);
         iv.setCursor(javafx.scene.Cursor.HAND);
+        iv.setFitWidth(80); iv.setFitHeight(80);
 
         iv.setOnMouseDragged(e -> {
             if (!czyPauza) {
-                iv.setLayoutX(e.getSceneX() - target.localToScene(0,0).getX() - 50);
-                iv.setLayoutY(e.getSceneY() - target.localToScene(0,0).getY() - 50);
+                iv.setLayoutX(e.getSceneX() - target.localToScene(0,0).getX() - 40);
+                iv.setLayoutY(e.getSceneY() - target.localToScene(0,0).getY() - 40);
                 iv.toFront();
             }
         });
 
         iv.setOnMouseReleased(e -> {
             if (!czyPauza) {
-                if (iv.getBoundsInParent().intersects(czlowiek.getBoundsInParent())) {
+                if (iv.getBoundsInParent().intersects(celInterakcji.getBoundsInParent())) {
                     if (ok) gra.poprawnaInterakcja(); else gra.blednaInterakcja();
                 } else {
                     iv.setLayoutX(x);
@@ -306,8 +334,6 @@ public class OknoGry extends Application {
         });
         return iv;
     }
-
-    // --- METODY POMOCNICZE I OBSŁUGA LOGIKI ---
 
     public void wyswietlScenariusz(Scenariusze s) {
         panelInterakcji.setVisible(false);
