@@ -7,7 +7,7 @@ public class Gra {
 
     private int poziom = 1; // 1: Zamknięte, 2: Otwarte, 3: Iteracyjne (Interakcyjne)
     private int licznikPytanPoziomu = 0;
-    private final int MAX_PYTAN_NA_POZIOM = 6; // Możesz to zmienić na np. 5
+    private final int MAX_PYTAN_NA_POZIOM = 6;
 
     public Gra(String imie) {
         this.imieRatownika = imie;
@@ -33,12 +33,11 @@ public class Gra {
     }
 
     private void nastepny() {
-        // Sprawdzamy, czy czas na zmianę poziomu
         if (licznikPytanPoziomu >= MAX_PYTAN_NA_POZIOM) {
             poziom++;
             licznikPytanPoziomu = 0;
             if (poziom <= 3) {
-                okno.pokazInfoOPoziomie(poziom); // Wywołanie nowej metody
+                okno.pokazInfoOPoziomie(poziom);
             }
         }
 
@@ -49,11 +48,9 @@ public class Gra {
             return;
         }
 
-        // Pobieramy scenariusz pasujący do obecnego poziomu
         aktualny = pobierzOdpowiedniScenariusz();
 
         if (aktualny == null) {
-            // Jeśli zabrakło pytań w danym typie, idziemy do raportu
             RaportZGry.zapis(gracz);
             okno.pokazKoniecDnia(gracz);
             return;
@@ -64,13 +61,11 @@ public class Gra {
     }
 
     private Scenariusze pobierzOdpowiedniScenariusz() {
-        // Ta metoda szuka w liście scenariusza, który pasuje do etapu gry
-        // i nie był jeszcze użyty (zakładając, że scenariusze.nastepny() to obsługuje)
 
         Scenariusze s;
         int proby = 0;
 
-        while (proby < 100) { // Próbujemy znaleźć pasujący typ
+        while (proby < 100) {
             s = scenariusze.nastepny();
             if (s == null) return null;
 
@@ -81,7 +76,6 @@ public class Gra {
             } else if (poziom == 3 && s.isInterakcyjne()) {
                 return s; // Poziom 3: Tylko iteracyjne
             }
-            // Jeśli wylosowany nie pasuje do poziomu, pętla szuka dalej
             proby++;
         }
         return null;
@@ -102,13 +96,23 @@ public class Gra {
         }
     }
 
-    public void obsluzOdpowiedzTekstowa(String txt, long czas) {
-        if (aktualny.poprawnaTekst(txt)) {
-            gracz.dodajPunkty(15);
+    public void obsluzOdpowiedzTekstowa(String odpowiedz, long czas) {
+
+        if (aktualny.poprawnaTekst(odpowiedz)) {
+
+            int p = (int) Math.max(10, 100 - (czas / 200));
+            gracz.dodajPunkty(p);
             okno.aktualizacjaPunktow(gracz.getPunkty());
             nastepny();
+
         } else {
-            przegrana();
+
+            gracz.dodajPunkty(-10);
+            okno.aktualizacjaPunktow(gracz.getPunkty());
+
+            System.out.println("Błąd w pytaniu otwartym! Tracisz 10 pkt.");
+
+            nastepny();
         }
     }
 

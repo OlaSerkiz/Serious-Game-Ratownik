@@ -70,7 +70,7 @@ public class MozliweScenatiusze {
                 TypPytania.OTWARTE
         ));
         lista.add(new Scenariusze(
-                "Jak nazywają się toksyczne mikroorganizmy, których zakwit powoduje wywieszenie czerwonej flagi (kolor wody staje się zielony)?",
+                "Jak nazywają się toksyczne mikroorganizmy, których zakwit powoduje wywieszenie czerwonej flagi?",
                 "Sinice",
                 TypPytania.OTWARTE
         ));
@@ -108,6 +108,20 @@ public class MozliweScenatiusze {
                 new String[]{"czerwonaflaga.png", "bialaflaga.png", "zoltaflaga.png"},
                 "czerwonaflaga.png",
                 "WIEZA"
+        ));
+        lista.add(new Scenariusze(
+                "Musisz pilnie wezwać wsparcie drugiej wieży ratowniczej. Czego użyjesz do komunikacji?",
+                TypPytania.INTERAKCYJNE,
+                new String[]{"krotkofalowka.png", "telefon.png", "gwizdek.png"},
+                "krotkofalowka.png",
+                "KOMUNIKACJA"
+        ));
+        lista.add(new Scenariusze(
+                "Dziecko wchodzi do głębokiej wody, a nie potrafi pływać. Co powinno mieć na sobie?",
+                TypPytania.INTERAKCYJNE,
+                new String[]{"rekawki.png", "pletwy.png", "maska.png"},
+                "rekawki.png",
+                "DZIECKO"
         ));
     }
 

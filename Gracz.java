@@ -9,7 +9,10 @@ public class Gracz {
     }
 
     public void dodajPunkty(int p) {
-        punkty += p;
+        this.punkty += p;
+        if (this.punkty < 0) {
+            this.punkty = 0; // Zabezpieczenie przed ujemnym wynikiem końcowym
+        }
     }
 
     public void odejmijPunkty(int p) {
