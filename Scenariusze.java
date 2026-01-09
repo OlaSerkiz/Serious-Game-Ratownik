@@ -1,52 +1,67 @@
 public class Scenariusze {
-    private String opis;
+    private String opisy;
     private String[] odpowiedzi;
-    private TypPytania typ;
-    private int poprawnaOdpIdx; // indeks dla pytań zamkniętych
-    private boolean krytyczne;
-    private String poprawnaTekstowa; // dla pytań otwartych
+    private int poprawna;
+    private boolean interakcyjne;
+    private boolean otwartePytanie;
+    private int poziom;
+    private String poprawnaOdpowiedzTekstowa;
+    private int poprawnaOdpowiedzIndex;
 
+    private String scenaTyp;
     private String[] grafikiInterakcyjne;
     private String poprawnaGrafika;
-    private String scenaTyp;
 
-    public Scenariusze(String opis, String[] odpowiedzi, TypPytania typ, int poprawnaOdpIdx, boolean krytyczne) {
-        this.opis = opis;
+    public Scenariusze(String opisy, String[] odpowiedzi, int poprawna, int poziom) {
+        this.opisy = opisy;
         this.odpowiedzi = odpowiedzi;
-        this.typ = typ;
-        this.poprawnaOdpIdx = poprawnaOdpIdx;
-        this.krytyczne = krytyczne;
+        this.poprawna = poprawna;
+        this.poziom = poziom;
+        this.interakcyjne = false;
+        this.otwartePytanie = false;
     }
 
-    public Scenariusze(String opis, String poprawnaTekstowa, TypPytania typ) {
-        this.opis = opis;
-        this.poprawnaTekstowa = poprawnaTekstowa;
-        this.typ = typ;
+    public int getPoziom() {
+        return poziom;
+    }
+    public boolean czyPoprawna(int index) {
+        return this.poprawnaOdpowiedzIndex == index;
     }
 
-    public Scenariusze(String opis, TypPytania typ, String[] grafiki, String poprawna, String scenaTyp) {
-        this.opis = opis;
-        this.typ = typ;
+    public String getOpisy() {
+        return opisy;
+    }
+    public String[] getOdpowiedzi() {
+        return odpowiedzi;
+    }
+    public boolean isInterakcyjne() {
+        return interakcyjne;
+    }
+    public boolean isOtwartePytanie() {
+        return otwartePytanie; }
+    public String getScenaTyp() {
+        return scenaTyp;
+    }
+    public String[] getGrafikiInterakcyjne() {
+        return grafikiInterakcyjne;
+    }
+    public String getPoprawnaGrafika() {
+        return poprawnaGrafika;
+    }
+
+    public void setInterakcyjne(String typ, String[] grafiki, String poprawnaG) {
+        this.interakcyjne = true;
+        this.scenaTyp = typ;
         this.grafikiInterakcyjne = grafiki;
-        this.poprawnaGrafika = poprawna;
-        this.scenaTyp = scenaTyp;
+        this.poprawnaGrafika = poprawnaG;
     }
 
-    public boolean sprawdzCzyPoprawna(int idx) {
-        return idx == this.poprawnaOdpIdx;
+    public String getPoprawnaOdpowiedzTekstowa() {
+        return poprawnaOdpowiedzTekstowa;
     }
 
-    public boolean poprawnaTekst(String txt) {
-        return txt != null && poprawnaTekstowa != null && txt.trim().equalsIgnoreCase(poprawnaTekstowa);
+    public void setPoprawnaOdpowiedzTekstowa(String odp) {
+        this.otwartePytanie = true;
+        this.poprawnaOdpowiedzTekstowa = odp;
     }
-
-    public String getOpisy() { return opis; }
-    public String[] getOdpowiedzi() { return odpowiedzi; }
-    public TypPytania getTyp() { return typ; }
-    public boolean isOtwartePytanie() { return typ == TypPytania.OTWARTE; }
-    public boolean isInterakcyjne() { return typ == TypPytania.INTERAKCYJNE; }
-    public boolean isKrytyczna() { return krytyczne; }
-    public String getScenaTyp() { return scenaTyp; }
-    public String[] getGrafikiInterakcyjne() { return grafikiInterakcyjne; }
-    public String getPoprawnaGrafika() { return poprawnaGrafika; }
 }

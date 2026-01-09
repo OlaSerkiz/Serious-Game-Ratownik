@@ -1,5 +1,4 @@
 public class Gracz {
-
     private String imie;
     private int punkty;
 
@@ -8,26 +7,21 @@ public class Gracz {
         this.punkty = 0;
     }
 
+    public String getImie() { return imie; }
+    public void setImie(String imie) { this.imie = imie; }
+
+    public int getPunkty() { return punkty; }
+    public void setPunkty(int punkty) { this.punkty = punkty; }
+
     public void dodajPunkty(int p) {
         this.punkty += p;
-        if (this.punkty < 0) {
-            this.punkty = 0; // Zabezpieczenie przed ujemnym wynikiem końcowym
-        }
+        if (this.punkty < 0) this.punkty = 0;
     }
 
     public void odejmijPunkty(int p) {
-        punkty -= p;
-    }
-
-    public int getPunkty() {
-        return punkty;
-    }
-
-    public String getImie() {
-        return imie;
-    }
-
-    public void reset() {
-        punkty = 0;
+        this.punkty -= p;
+        if (this.punkty < 0) {
+            this.punkty = 0;
+        }
     }
 }
